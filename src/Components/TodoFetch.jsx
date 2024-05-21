@@ -20,10 +20,15 @@ import { MdDelete } from "react-icons/md";
 import { MdEdit } from "react-icons/md";
 import { FaStar } from "react-icons/fa6";
 import { FaRegStar } from "react-icons/fa6";
+import { useDispatch, useSelector } from 'react-redux';
+import { appSelector } from './redux/Selector';
+import { getTodosAction } from './redux/Action';
 
 
 function TodoFetch() {
-  const [todos, setTodos] = useState([])
+  const dispatch = useDispatch()
+  const {todos} = useSelector(appSelector) 
+ // const [todos, setTodos] = useState([])
   const [todoValue, setTodovalue] = useState("")
   const [notes, setNotes] = useState("")
   const [show, setShow] = useState(false)
@@ -57,10 +62,12 @@ function TodoFetch() {
 
   }
  
-  
   useEffect(() => {
-    getTodos()
+    dispatch(getTodosAction())
   }, [selectedType])
+  // useEffect(() => {
+  //   getTodos()
+  // }, [selectedType])
   const getTodos = () => {
     fetch(`${Key.domain}/getTodos`, {
       method: "GET",
@@ -70,7 +77,7 @@ function TodoFetch() {
     }).then((res) => res.json())
       .then((res) => {
         console.log(res)
-        setTodos(res.data)
+       // setTodos(res.data)
         filterTodos(res.data);
       }).catch((err) => {
         console.log(err)
@@ -139,14 +146,14 @@ function TodoFetch() {
 
   const deleteTodo = (todoID) => {
     console.log("tood", todoID)
-    fetch(`${Key.domain}/deleteTodo`, {
+    fetch(`${Key.domain}/deleteTodo/${todoID}`, {
       method: "delete",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        id: todoID
-      })
+      // body: JSON.stringify({
+      //   id: todoID
+      // })
     }).then((res) => res.json())
       .then((res) => {
         if (res.status === "success") {
@@ -428,7 +435,8 @@ function TodoFetch() {
                         <FaRegStar color='white' onClick={() => importantTask(todo)} />
                       ) : (
                         <FaStar color='white' onClick={() => importantTask(todo)} />
-                      )}
+                      )}import { Dispatch } from './../../node_modules/redux/src/types/store';
+
                       <MdDelete color='white' onClick={() => deleteTodo(todo?._id)} />
                     </Box>
                   </ListItemButton>
