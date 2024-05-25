@@ -21,14 +21,29 @@ import { MdEdit } from "react-icons/md";
 import { FaStar } from "react-icons/fa6";
 import { FaRegStar } from "react-icons/fa6";
 import { useDispatch, useSelector } from 'react-redux';
-import { appSelector } from './redux/Selector';
-import { getTodosAction } from './redux/Action';
+import { todoSelector } from './redux/Selector';
+import {  createTodoAction, deleteTodoAction, getTodosAction, updateTodoAction } from './redux/Action';
+const inputStyle = {
+  margin: "30px",
+  width: "70%",
+  height: "30px",
+  borderRadius: "50px",
+  boxShadow: "0 0 5px white",
+  padding: "10px",
 
+}
+const buttonStyle = {
+  margin: "30px",
+  padding: "1px 20px",
+  borderRadius: "50px",
+  boxShadow: "0 0 5px white",
+  color: "white",
+
+}
 
 function TodoFetch() {
   const dispatch = useDispatch()
-  const {todos} = useSelector(appSelector) 
- // const [todos, setTodos] = useState([])
+  const todos = useSelector(todoSelector);
   const [todoValue, setTodovalue] = useState("")
   const [notes, setNotes] = useState("")
   const [show, setShow] = useState(false)
@@ -44,61 +59,43 @@ function TodoFetch() {
   const editDialogClose = () => {
     setShow(false)
   }
-  const inputStyle = {
-    margin: "30px",
-    width: "70%",
-    height: "30px",
-    borderRadius: "50px",
-    boxShadow: "0 0 5px white",
-    padding: "10px",
+  useEffect(() => {
+    dispatch(getTodosAction());
+  }, []);
+  
+  useEffect(() => {
+    filterTodos(todos);
+  }, [todos, selectedType]);
 
-  }
-  const buttonStyle = {
-    margin: "30px",
-    padding: "1px 20px",
-    borderRadius: "50px",
-    boxShadow: "0 0 5px white",
-    color: "white",
-
+  let handleSelectiontype = (e) => {
+    setSelectedType(e.target.value)
+    console.log(e.target.value)
   }
  
-  useEffect(() => {
-    dispatch(getTodosAction())
-  }, [selectedType])
   // useEffect(() => {
-  //   getTodos()
-  // }, [selectedType])
-  const getTodos = () => {
-    fetch(`${Key.domain}/getTodos`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
-      }
-    }).then((res) => res.json())
-      .then((res) => {
-        console.log(res)
-       // setTodos(res.data)
-        filterTodos(res.data);
-      }).catch((err) => {
-        console.log(err)
+  //   const fetch = async () => {
+  //     await dispatch(getTodosAction())
+  //     await filterTodos(todos);
+  //   }
+  //   fetch()
+  // }, [todos, selectedType])
 
-      })
-  }
   const filterTodos = (todos) => {
+    console.log("todos" , todos)
     let filtered = [];
     let message = '';
 
     switch (selectedType) {
       case 'Incomplete':
-        filtered = todos?.filter((todo) => todo.completed === 0);
+        filtered = todos?.length > 0 && todos?.filter((todo) => todo.completed === 0);
         message = '🎉✨ Hurrah! All tasks are completed! ✨🎉';
         break;
       case 'Completed':
-        filtered = todos?.filter((todo) => todo.completed === 1);
+        filtered = todos?.length > 0 && todos?.filter((todo) => todo.completed === 1);
         message = '😅🚀 Time to hustle! Get that work done, champ! 💼✏️';
         break;
       case 'Important':
-        filtered = todos?.filter((todo) => todo.important === 1);
+        filtered = todos?.length > 0 && todos?.filter((todo) => todo.important === 1);
         message = '⭐️🌟Take a breather or focus on the essentials! 🌟⭐️';
         break;
       default:
@@ -110,146 +107,70 @@ function TodoFetch() {
     setNoTasksMessage(message);
   };
 
-  const AddTodo = () => {
-    if (todoValue !== "") {
-      fetch(`${Key.domain}/createTodos`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          title: todoValue,
-          completed: 0,
-          important: 0,
-          add_to_day: 0,
-          due_date: "",
-          planned: 0,
-          content: notes
-        })
-      }).then((res) => res.json())
-        .then((res) => {
-          if (res.status === "success") {
-            console.log("called")
-            let msg = "Todo Created Successfully";
-            getTodos()
-            setTodovalue(" ")
-          }
-        }).catch((err) => {
-          console.log(err)
-
-        })
+  const AddTodo = async () => {
+    const todoData = {
+      title: todoValue,
+      completed: 0,
+      important: 0,
+      add_to_day: 0,
+      due_date: "",
+      planned: 0,
+      content: notes
     }
-    else {
-      toast.error("Please enter a task");
+    if(todoValue !== ""){
+     await dispatch(createTodoAction(todoData))
+     setTodovalue("")
+    
     }
   }
+  const deleteTodo = async (todoID) => {
+    await dispatch(deleteTodoAction(todoID))
 
-  const deleteTodo = (todoID) => {
-    console.log("tood", todoID)
-    fetch(`${Key.domain}/deleteTodo/${todoID}`, {
-      method: "delete",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      // body: JSON.stringify({
-      //   id: todoID
-      // })
-    }).then((res) => res.json())
-      .then((res) => {
-        if (res.status === "success") {
-          toast.success("Todo deleted successfully");
-          getTodos()
-        }
-      }).catch((err) => {
-        console.log(err)
-      })
   }
-  const EditTask = (todo) => {
-    fetch(`${Key.domain}/updateTodo`, {
-      method: "post",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        id: todo?._id,
-        title: editText,
-        content: todo?.content,
-        completed: todo?.completed,
-        important: todo?.important,
-        add_to_day: todo?.add_to_day,
-        due_date: todo?.due_date,
-        planned: todo?.planned,
+  const EditTask = async (todo) => {
+    const todoData = {
+      id: todo?._id,
+      title: editText,
+      content: todo?.content,
+      completed: todo?.completed,
+      important: todo?.important,
+      add_to_day: todo?.add_to_day,
+      due_date: todo?.due_date,
+      planned: todo?.planned,
+    }
+    await dispatch(updateTodoAction(todoData?.id , todoData))
+    
 
-      })
-    }).then((res) => res.json())
-      .then((res) => {
-        if (res.status === "success" && res.data.modifiedCount > 0) {
-          toast.success("Todo edited successfully");
-          getTodos()
-          editDialogClose()
-          setEditText("")
-        }
-      }).catch((err) => {
-        console.log(err)
-      })
   }
-  let handleSelectiontype = (e) => {
-    setSelectedType(e.target.value)
-    console.log(e.target.value)
-  }
-  const importantTask = (todo) => {
-    fetch(`${Key.domain}/updateTodo`, {
-      method: "post",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        id: todo?._id,
-        title: todo.title,
-        content: todo?.content,
-        completed: todo?.completed,
-        important: todo.important === 0 ? 1 : 0,
-        add_to_day: todo?.add_to_day,
-        due_date: todo?.due_date,
-        planned: todo?.planned,
+ 
+  const importantTask = async (todo) => {
+    let todoData = {
+      id: todo?._id,
+      title: todo.title,
+      content: todo?.content,
+      completed: todo?.completed,
+      important: todo.important === 0 ? 1 : 0,
+      add_to_day: todo?.add_to_day,
+      due_date: todo?.due_date,
+      planned: todo?.planned,
 
-      })
-    }).then((res) => res.json())
-      .then((res) => {
-        if (res.status === "success" && res.data.modifiedCount > 0) {
-          toast.success("Todo updated successfully");
-          getTodos()
-        }
-      }).catch((err) => {
-        console.log(err)
-      })
+    }
+    await dispatch(updateTodoAction(todoData?.id , todoData))
   }
-  const completeTask = (todo) => {
-    fetch(`${Key.domain}/updateTodo`, {
-      method: "post",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        id: todo?._id,
-        title: todo.title,
-        content: todo?.content,
-        completed: todo?.completed === 0 ? 1 : 0,
-        important: todo.important ,
-        add_to_day: todo?.add_to_day,
-        due_date: todo?.due_date,
-        planned: todo?.planned,
 
-      })
-    }).then((res) => res.json())
-      .then((res) => {
-        if (res.status === "success" && res.data.modifiedCount > 0) {
-          toast.success("Todo updated successfully");
-          getTodos()
-        }
-      }).catch((err) => {
-        console.log(err)
-      })
+  const completeTask = async (todo) => {
+    let todoData = {
+      id: todo?._id,
+      title: todo.title,
+      content: todo?.content,
+      completed: todo?.completed === 0 ? 1 : 0,
+      important: todo.important ,
+      add_to_day: todo?.add_to_day,
+      due_date: todo?.due_date,
+      planned: todo?.planned,
+    }
+    await dispatch(updateTodoAction(todoData?.id , todoData))
+
   }
 
 
@@ -262,7 +183,7 @@ function TodoFetch() {
               ToDo
             </Typography>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <input style={inputStyle} value={todoValue} onChange={(e) => { setTodovalue(e.target.value); console.log(e.target.value) }} />
+              <input style={inputStyle} value={todoValue} onChange={(e)=> setTodovalue(e.target.value)} />
               <Button style={buttonStyle} onClick={AddTodo}>AddTask</Button>
             </Box>
             <Card sx={{ bgcolor: 'black', color: "white", m: 3 }}>
@@ -286,120 +207,6 @@ function TodoFetch() {
               </Grid>
             </Card>
             
-            {/* {
-              selectedType === "Incomplete" ? (
-                <List sx={{ margin: "0px 20px" }}>
-                  {
-                    IncompleteTodos?.length > 0 ? (
-                      IncompleteTodos.map((todo) => (
-                      <ListItemButton key={todo?._id} sx={{ boxShadow: "0px 0px 5px grey", marginBottom: "10px", display: "flex", justifyContent: "space-between" }}>
-                        <Typography sx={{ color: "white", textAlign: 'center', }} >
-                          {todo.title}
-                        </Typography>
-                        <Box style={{ width: "100px", display: "flex", justifyContent: "space-around" }}>
-                          <MdEdit color='white' onClick={() => editDialogOpen(todo)} />
-                          {
-                            todo.important === 0 ?
-                              <FaRegStar color='white' onClick={() => importantTask(todo)} /> :
-                              <FaStar color='white' onClick={() => importantTask(todo)} />
-                          }
-
-                          <MdDelete color='white' onClick={() => deleteTodo(todo?._id)} />
-
-                        </Box>
-                      </ListItemButton>
-                    ))
-                    ) : (
-                      <Card sx={{ p: 2, bgcolor: 'black', color: "white" }}>
-                        <Typography sx={{ fontWeight: "bold" }}>🎉✨ Hurrah! All tasks are completed! ✨🎉</Typography>
-                      </Card>
-                    )}
-                </List>
-              ) : selectedType === "Completed" ? (
-                <List sx={{ margin: "0px 20px" }}>
-                {
-                  todos?.length > 0 ? (
-                    todos.map((todo) => (
-                      <ListItemButton key={todo?._id} sx={{ boxShadow: "0px 0px 5px grey", marginBottom: "10px", display: "flex", justifyContent: "space-between" }}>
-                        <Typography sx={{ color: "white", textAlign: 'center', }} >
-                          {todo.title}
-                        </Typography>
-                        <Box style={{ width: "100px", display: "flex", justifyContent: "space-around" }}>
-                          <MdEdit color='white' onClick={() => editDialogOpen(todo)} />
-                          {
-                            todo.important === 0 ? 
-                            <FaRegStar color='white' onClick={()=> importantTask(todo)} /> :
-                            <FaStar color='white' onClick={()=> importantTask(todo)} />
-                          }
-                          <MdDelete color='white' onClick={() => deleteTodo(todo?._id)} />
-                        </Box>
-                      </ListItemButton>
-                  ))
-                      ) : (
-                        <Card sx={{ p: 2, bgcolor: 'black', color: "white" }}>
-                          <Typography sx={{ fontWeight: "bold" }}>😅🚀 Time to hustle! Get that work done, champ! 💼✏️</Typography>
-                        </Card>
-                      )}
-              </List>
-              ) : selectedType === "Important" ? (
-                    <List sx={{ margin: "0px 20px" }}>
-                      {importantTodos?.length > 0 ? (
-                        importantTodos.map((todo) => (
-                          <ListItemButton
-                            key={todo?._id}
-                            sx={{
-                              boxShadow: "0px 0px 5px grey",
-                              marginBottom: "10px",
-                              display: "flex",
-                              justifyContent: "space-between"
-                            }}
-                          >
-                            <Typography sx={{ color: "white", textAlign: 'center' }}>
-                              {todo.title}
-                            </Typography>
-                            <Box style={{ width: "100px", display: "flex", justifyContent: "space-around" }}>
-                              <MdEdit color='white' onClick={() => editDialogOpen(todo)} />
-                              {todo.important === 0 ? (
-                                <FaRegStar color='white' onClick={() => importantTask(todo)} />
-                              ) : (
-                                <FaStar color='white' onClick={() => importantTask(todo)} />
-                              )}
-                              <MdDelete color='white' onClick={() => deleteTodo(todo?._id)} />
-                            </Box>
-                          </ListItemButton>
-                        ))
-                      ) : (
-                        <Card sx={{p:2 }}>
-                          <Typography sx={{fontWeight:"bold"}}>No Important Tasks to display</Typography>
-                        </Card>
-                      )}
-                    </List>
-              ) : ""
-            } */}
-            {/* <List sx={{ margin: "0px 20px" }}>
-              {
-                todos?.length > 0 && todos.map((todo) => {
-                  return (
-                    <ListItemButton key={todo?._id} sx={{ boxShadow: "0px 0px 5px grey", marginBottom: "10px", display: "flex", justifyContent: "space-between" }}>
-                      <Typography sx={{ color: "white", textAlign: 'center', }} >
-                        {todo.title}
-                      </Typography>
-                      <Box style={{ width: "100px", display: "flex", justifyContent: "space-around" }}>
-                        <MdEdit color='white' onClick={() => editDialogOpen(todo)} />
-                        {
-                          todo.important === 0 ? 
-                          <FaRegStar color='white' onClick={()=> importantTask(todo)} /> :
-                          <FaStar color='white' onClick={()=> importantTask(todo)} />
-                        }
-                       
-                        <MdDelete color='white' onClick={() => deleteTodo(todo?._id)} />
-                       
-                      </Box>
-                    </ListItemButton>
-                  )
-                })
-              }
-            </List> */}
             <List sx={{ margin: "0px 20px" }}>
               {filteredTodos?.length > 0 ? (
                 filteredTodos.map((todo) => (
@@ -435,7 +242,7 @@ function TodoFetch() {
                         <FaRegStar color='white' onClick={() => importantTask(todo)} />
                       ) : (
                         <FaStar color='white' onClick={() => importantTask(todo)} />
-                      )}import { Dispatch } from './../../node_modules/redux/src/types/store';
+                      )}
 
                       <MdDelete color='white' onClick={() => deleteTodo(todo?._id)} />
                     </Box>

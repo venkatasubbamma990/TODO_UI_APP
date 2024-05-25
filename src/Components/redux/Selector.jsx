@@ -1,1 +1,1 @@
-export const appSelector = (state) => state.appManagement;
+export const todoSelector = (state) => state.todos;

@@ -15,11 +15,12 @@ const get = async (url) => {
         console.log(err);
     }
 }
-const post = async () => {
+const post = async (url , payload) => {
     try{
         const response = await fetch(url, {
             method: "POST",
             headers: headers,
+            body: JSON.stringify(payload),
         })
         const result = await response.json();
         return result;
