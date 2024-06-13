@@ -15,7 +15,8 @@ import {
   Radio,
 } from '@mui/material'
 import Key from './Clientvaribales.json'
-import { toast } from 'react-toastify';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { MdDelete } from "react-icons/md";
 import { MdEdit } from "react-icons/md";
 import { FaStar } from "react-icons/fa6";
@@ -119,12 +120,45 @@ function TodoFetch() {
     }
     if(todoValue !== ""){
      await dispatch(createTodoAction(todoData))
+     toast.success("Todo Added Successfully", {
+      position: "bottom-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+    });
+  
      setTodovalue("")
     
+    }
+    else {
+      toast.error("Title is required", {
+        position: "bottom-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
     }
   }
   const deleteTodo = async (todoID) => {
     await dispatch(deleteTodoAction(todoID))
+    toast.success("Todo Deleted Successfully", {
+      position: "bottom-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+    });
 
   }
   const EditTask = async (todo) => {
@@ -139,7 +173,17 @@ function TodoFetch() {
       planned: todo?.planned,
     }
     await dispatch(updateTodoAction(todoData?.id , todoData))
-    
+    toast.success("Todo Updated Successfully", {
+      position: "bottom-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+    });
+    editDialogClose()
 
   }
  
@@ -156,6 +200,16 @@ function TodoFetch() {
 
     }
     await dispatch(updateTodoAction(todoData?.id , todoData))
+    toast.success(" Added To Important Successfully", {
+      position: "bottom-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+    });
   }
 
   const completeTask = async (todo) => {
@@ -170,6 +224,16 @@ function TodoFetch() {
       planned: todo?.planned,
     }
     await dispatch(updateTodoAction(todoData?.id , todoData))
+    toast.success("Todo Completed Successfully", {
+      position: "bottom-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+    });
 
   }
 
@@ -308,6 +372,19 @@ function TodoFetch() {
             </Dialog>
           </Grid>
         </Grid>
+        <ToastContainer
+              position="bottom-right"
+              autoClose={1000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="light"
+            />
+            
       </Grid>
     </>
   )

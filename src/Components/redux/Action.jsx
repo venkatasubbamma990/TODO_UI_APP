@@ -1,6 +1,8 @@
 import url from '../api/apilist';
 import * as types from './Actiontypes'
 import {get , post} from "../api/apimethods"
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // export const getTodosAction = () => {
 //     let apiurl = url("todoList")
@@ -34,6 +36,7 @@ export const getTodosAction = () => {
             let todolist;
             if (response.status === "success") {
                 todolist = response?.data;
+                
             }
             dispatch({
                 type: types.GET_TODOS_ACTION,
@@ -117,3 +120,4 @@ export const updateTodoAction = (todoID  , tododata) => {
         }
    }
 }
+
